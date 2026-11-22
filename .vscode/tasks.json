@@ -1,0 +1,38 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Compra: iniciar desarrollo (WSL)",
+      "type": "npm",
+      "script": "dev",
+      "isBackground": true,
+      "problemMatcher": [],
+      "group": "build"
+    },
+    {
+      "label": "Compra: compilar",
+      "type": "npm",
+      "script": "build",
+      "problemMatcher": "$tsc",
+      "group": "build"
+    },
+    {
+      "label": "Compra: crear tablas D1 local",
+      "type": "npm",
+      "script": "db:local",
+      "problemMatcher": []
+    },
+    {
+      "label": "Compra: actualizar D1 producción",
+      "type": "npm",
+      "script": "db:remote",
+      "problemMatcher": []
+    },
+    {
+      "label": "Compra: desplegar Cloudflare",
+      "type": "npm",
+      "script": "deploy",
+      "problemMatcher": []
+    }
+  ]
+}
