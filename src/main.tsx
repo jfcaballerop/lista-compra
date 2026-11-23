@@ -48,7 +48,11 @@ async function api<T>(url: string, opts: RequestInit = {}): Promise<T> {
 
 function App() {
   const [auth, setAuth] = useState<AuthState>('loading');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [invitation, setInvitation] = useState('');
+  const [registering, setRegistering] = useState(false);
+  const [currentUser, setCurrentUser] = useState('');
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
@@ -62,8 +66,13 @@ function App() {
 
   const handleError = useCallback((err: unknown) => {
     if (err instanceof Error && err.name === 'UnauthorizedError') {
+      searchRequest.current++;
       setAuth('logged-out');
       setItems([]);
+      setCurrentUser('');
+      setQuery('');
+      setSuggestions([]);
+      setSuggestionsOpen(false);
       setMessage('La sesión ha caducado. Vuelve a entrar.');
       return;
     }
@@ -82,8 +91,9 @@ function App() {
     let active = true;
     (async () => {
       try {
-        const response = await api<{ authenticated: boolean }>('/api/session');
+        const response = await api<{ authenticated: boolean; username?: string }>('/api/session');
         if (!active) return;
+        setCurrentUser(response.username ?? '');
         setAuth(response.authenticated ? 'logged-in' : 'logged-out');
         if (response.authenticated) await loadItems();
       } catch (err) {
@@ -116,12 +126,17 @@ function App() {
 
   async function login(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!password || working) return;
+    if (!username.trim() || !password || working) return;
     setWorking(true);
     setMessage(null);
     try {
-      await api<{ authenticated: boolean }>('/api/login', { method: 'POST', body: JSON.stringify({ password }) });
+      const response = await api<{ authenticated: boolean; username: string }>(
+        registering ? '/api/register' : '/api/login',
+        { method: 'POST', body: JSON.stringify({ username, password, ...(registering ? { invitation } : {}) }) },
+      );
       setPassword('');
+      setInvitation('');
+      setCurrentUser(response.username);
       setAuth('logged-in');
       await loadItems();
     } catch (err) { setMessage(err instanceof Error ? err.message : 'No se ha podido iniciar sesión.'); }
@@ -131,10 +146,13 @@ function App() {
   async function logout() {
     try {
       await api('/api/logout', { method: 'POST' });
+      searchRequest.current++;
       setAuth('logged-out');
+      setCurrentUser('');
       setItems([]);
       setQuery('');
       setSuggestions([]);
+      setSuggestionsOpen(false);
     } catch (err) { handleError(err); }
   }
 
@@ -224,11 +242,15 @@ function App() {
         <div className="hero-icon"><Icon name="bag" size={38} stroke={1.8} /></div>
         <div className="eyebrow">TU COMPRA, MÁS FÁCIL</div>
         <h1>Mi Lista<span>.</span></h1>
-        <p className="login-subtitle">Todo lo que necesitas, en un solo lugar. Entra para ver tu lista privada.</p>
+        <p className="login-subtitle">{registering ? 'Crea tu cuenta con un código de invitación.' : 'Entra para ver tu lista privada.'}</p>
         <form onSubmit={login} className="login-form">
+          <label htmlFor="username">Usuario</label>
+          <div className="input-with-icon"><input id="username" type="text" autoComplete="username" placeholder="Tu usuario" minLength={3} maxLength={32} value={username} onChange={e => setUsername(e.target.value)} required /></div>
           <label htmlFor="password">Contraseña</label>
-          <div className="input-with-icon"><Icon name="lock" size={19}/><input id="password" type="password" autoComplete="current-password" placeholder="Tu contraseña" value={password} onChange={e => setPassword(e.target.value)} required /></div>
-          <button className="primary-button" disabled={working} type="submit">{working ? 'Entrando…' : 'Entrar en mi lista'} <span>→</span></button>
+          <div className="input-with-icon"><Icon name="lock" size={19}/><input id="password" type="password" autoComplete={registering ? 'new-password' : 'current-password'} placeholder="Tu contraseña" minLength={registering ? 12 : undefined} maxLength={128} value={password} onChange={e => setPassword(e.target.value)} required /></div>
+          {registering && <><label htmlFor="invitation">Código de invitación</label><div className="input-with-icon"><input id="invitation" type="password" autoComplete="off" placeholder="Código de invitación" value={invitation} onChange={e => setInvitation(e.target.value)} required /></div></>}
+          <button className="primary-button" disabled={working} type="submit">{working ? 'Procesando…' : registering ? 'Crear cuenta' : 'Entrar en mi lista'} <span>→</span></button>
+          <button className="auth-switch" type="button" disabled={working} onClick={() => { setRegistering(!registering); setMessage(null); setPassword(''); setInvitation(''); }}>{registering ? 'Ya tengo una cuenta' : 'Crear una cuenta con invitación'}</button>
         </form>
         {message && <div className="feedback" role="alert">{message}<button aria-label="Cerrar aviso" onClick={() => setMessage(null)}><Icon name="x" size={15} /></button></div>}
         <p className="private-note"><Icon name="lock" size={14}/> Tus productos se guardan de forma privada en Cloudflare.</p>
@@ -239,7 +261,7 @@ function App() {
   return <div className="app-shell">
     <header className="header">
       <div className="brand"><div className="brand-icon"><Icon name="bag" size={23}/></div><span>Mi Lista<span className="brand-dot">.</span></span></div>
-      <button type="button" className="logout-button" onClick={logout} title="Cerrar sesión" aria-label="Cerrar sesión"><Icon name="logout" size={20}/></button>
+      <div className="account-actions"><span>{currentUser}</span><button type="button" className="logout-button" onClick={logout} disabled={working || !!busyItem || initialLoading} title="Cerrar sesión" aria-label="Cerrar sesión"><Icon name="logout" size={20}/></button></div>
     </header>
 
     <main className="content">

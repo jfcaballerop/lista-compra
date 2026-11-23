@@ -2,18 +2,20 @@ import type { ShoppingRepository } from "../../application/shopping";
 import type { Item, Suggestion } from "../../domain/shopping";
 
 export class D1ShoppingRepository implements ShoppingRepository {
-  constructor(private readonly db: D1Database) {}
+  constructor(private readonly db: D1Database, private readonly userId: string) {}
 
   async getItems(): Promise<Item[]> {
     const { results } = await this.db
       .prepare(
         `
     SELECT i.id, p.name, i.purchased, i.created_at, i.purchased_at
-    FROM shopping_items i JOIN product_catalog p ON p.id = i.product_id
+    FROM user_shopping_items i JOIN user_product_catalog p ON p.id = i.product_id AND p.user_id = i.user_id
+    WHERE i.user_id = ?
     ORDER BY i.purchased ASC, i.created_at DESC
     LIMIT 1000
   `,
       )
+      .bind(this.userId)
       .all<Item>();
     return results;
   }
@@ -23,13 +25,13 @@ export class D1ShoppingRepository implements ShoppingRepository {
     const { results } = await this.db
       .prepare(
         `
-      SELECT id, name FROM product_catalog
-      WHERE name_key LIKE ? ESCAPE '!'
+      SELECT id, name FROM user_product_catalog
+      WHERE user_id = ? AND name_key LIKE ? ESCAPE '!'
       ORDER BY times_added DESC, last_added_at DESC
       LIMIT 8
     `,
       )
-      .bind(escaped)
+      .bind(this.userId, escaped)
       .all<Suggestion>();
     return results;
   }
@@ -38,12 +40,12 @@ export class D1ShoppingRepository implements ShoppingRepository {
     const duplicate = await this.db
       .prepare(
         `
-      SELECT i.id FROM shopping_items i
-      JOIN product_catalog p ON p.id=i.product_id
-      WHERE p.name_key=? AND i.purchased=0 LIMIT 1
+      SELECT i.id FROM user_shopping_items i
+      JOIN user_product_catalog p ON p.id=i.product_id AND p.user_id=i.user_id
+      WHERE i.user_id=? AND p.name_key=? AND i.purchased=0 LIMIT 1
     `,
       )
-      .bind(key)
+      .bind(this.userId, key)
       .first<{ id: string }>();
     return Boolean(duplicate);
   }
@@ -56,14 +58,14 @@ export class D1ShoppingRepository implements ShoppingRepository {
     const product = await this.db
       .prepare(
         `
-      INSERT INTO product_catalog (id,name,name_key,times_added,last_added_at)
-      VALUES (?,?,?,1,?)
-      ON CONFLICT(name_key) DO UPDATE SET
+      INSERT INTO user_product_catalog (id,user_id,name,name_key,times_added,last_added_at)
+      VALUES (?,?,?,?,1,?)
+      ON CONFLICT(user_id,name_key) DO UPDATE SET
         times_added=times_added+1, last_added_at=excluded.last_added_at
       RETURNING id
     `,
       )
-      .bind(crypto.randomUUID(), name, key, timestamp)
+      .bind(crypto.randomUUID(), this.userId, name, key, timestamp)
       .first<{ id: string }>();
     if (!product) throw new Error("No se pudo recuperar el producto.");
     return product.id;
@@ -75,21 +77,22 @@ export class D1ShoppingRepository implements ShoppingRepository {
   ): Promise<void> {
     await this.db.batch([
       this.db
-        .prepare("DELETE FROM shopping_items WHERE product_id=? AND purchased=1")
-        .bind(productId),
+        .prepare("DELETE FROM user_shopping_items WHERE user_id=? AND product_id=? AND purchased=1")
+        .bind(this.userId, productId),
       this.db
         .prepare(
           `
-      INSERT INTO shopping_items(id,product_id,purchased,created_at,purchased_at)
-      VALUES (?,?,0,?,NULL)
+      INSERT INTO user_shopping_items(id,user_id,product_id,purchased,created_at,purchased_at)
+      VALUES (?,?,?,0,?,NULL)
     `,
         )
-        .bind(crypto.randomUUID(), productId, timestamp),
+        .bind(crypto.randomUUID(), this.userId, productId, timestamp),
     ]);
   }
 
   async clearPurchased(): Promise<void> {
-    await this.db.prepare("DELETE FROM shopping_items WHERE purchased=1").run();
+    await this.db.prepare("DELETE FROM user_shopping_items WHERE user_id=? AND purchased=1")
+      .bind(this.userId).run();
   }
 
   async updatePurchased(
@@ -100,18 +103,18 @@ export class D1ShoppingRepository implements ShoppingRepository {
     const result = await this.db
       .prepare(
         `
-      UPDATE shopping_items SET purchased=?, purchased_at=? WHERE id=?
+      UPDATE user_shopping_items SET purchased=?, purchased_at=? WHERE id=? AND user_id=?
     `,
       )
-      .bind(purchased ? 1 : 0, timestamp, id)
+      .bind(purchased ? 1 : 0, timestamp, id, this.userId)
       .run();
     return Boolean(result.meta.changes);
   }
 
   async deleteItem(id: string): Promise<boolean> {
     const result = await this.db
-      .prepare("DELETE FROM shopping_items WHERE id=?")
-      .bind(id)
+      .prepare("DELETE FROM user_shopping_items WHERE id=? AND user_id=?")
+      .bind(id, this.userId)
       .run();
     return Boolean(result.meta.changes);
   }

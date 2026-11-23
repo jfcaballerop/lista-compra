@@ -39,9 +39,9 @@ async function signingKey(secret: string): Promise<CryptoKey> {
   );
 }
 
-export async function createSession(secret: string): Promise<string> {
+export async function createSession(secret: string, userId: string): Promise<string> {
   const expiration = Math.floor(Date.now() / 1000) + SESSION_SECONDS;
-  const payload = `v1.${expiration}`;
+  const payload = `v2.${expiration}.${userId}`;
   const signature = await crypto.subtle.sign(
     "HMAC",
     await signingKey(secret),
@@ -50,32 +50,34 @@ export async function createSession(secret: string): Promise<string> {
   return `${payload}.${toB64Url(new Uint8Array(signature))}`;
 }
 
-export async function hasValidSession(
+export async function sessionUserId(
   req: Request,
   secret: string,
-): Promise<boolean> {
+): Promise<string | null> {
   const value = req.headers
     .get("cookie")
     ?.split(";")
     .map((part) => part.trim())
     .find((part) => part.startsWith("compra_session="))
     ?.slice("compra_session=".length);
-  if (!value) return false;
+  if (!value) return null;
   const parts = value.split(".");
-  if (parts.length !== 3 || parts[0] !== "v1" || !/^\d{10,12}$/.test(parts[1]))
-    return false;
+  if (parts.length !== 4 || parts[0] !== "v2" || !/^\d{10,12}$/.test(parts[1]) ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(parts[2]))
+    return null;
   const expiration = Number(parts[1]);
   if (!Number.isSafeInteger(expiration) || expiration <= Date.now() / 1000)
-    return false;
+    return null;
   try {
-    const signature = new Uint8Array(fromB64Url(parts[2])).buffer;
-    return await crypto.subtle.verify(
+    const signature = new Uint8Array(fromB64Url(parts[3])).buffer;
+    const valid = await crypto.subtle.verify(
       "HMAC",
       await signingKey(secret),
       signature,
-      encoder.encode(`v1.${parts[1]}`),
+      encoder.encode(`v2.${parts[1]}.${parts[2]}`),
     );
+    return valid ? parts[2] : null;
   } catch {
-    return false;
+    return null;
   }
 }

@@ -1,3 +1,3 @@
 # Copia este archivo como .dev.vars (no lo publiques en Git)
-APP_PASSWORD="Elige-una-contrasena-larga-y-privada"
+INVITE_CODE="Elige-un-codigo-de-invitacion-largo-y-privado"
 SESSION_SECRET="Sustituir-por-una-cadena-aleatoria-de-32-bytes-o-mas"

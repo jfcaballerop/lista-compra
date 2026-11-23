@@ -11,7 +11,7 @@ Aplicación personal de lista de la compra, instalable en Android como PWA. Fron
 - Otro toque lo devuelve a pendientes; puedes eliminar una fila o vaciar Comprados **sin borrar el histórico**.
 - Si vuelves a añadir un producto comprado, se retiran sus filas de Comprados y queda uno pendiente.
 - Bloquea duplicados entre los pendientes; conserva un catálogo personal con el historial.
-- Una contraseña protege el acceso, con sesión firmada en cookie HttpOnly; los datos están en D1.
+- Cada usuario tiene su propia cuenta, lista e histórico en D1; el registro requiere invitación.
 - Se instala desde Chrome en Android y funciona como PWA. Necesita conexión para leer o modificar datos. La interfaz puede cargarse offline después de haberla visitado.
 
 ## 0. Requisitos y ubicación de los archivos
@@ -71,10 +71,10 @@ chmod 600 .dev.vars
 node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 ```
 
-Edita `.dev.vars` en VS Code. Usa una contraseña propia y larga para `APP_PASSWORD` y copia la salida hexadecimal generada por Node.js en `SESSION_SECRET`. Por ejemplo, la **estructura** del archivo será:
+Edita `.dev.vars` en VS Code. Usa un código de invitación privado de al menos 16 caracteres y un secreto de sesión aleatorio de al menos 32. Por ejemplo:
 
 ```dotenv
-APP_PASSWORD="TU_CONTRASENA_PRIVADA_LARGA"
+INVITE_CODE="TU_CODIGO_DE_INVITACION_PRIVADO"
 SESSION_SECRET="PEGA_AQUI_EL_VALOR_ALEATORIO_GENERADO"
 ```
 
@@ -87,7 +87,7 @@ npm run db:local
 npm run dev
 ```
 
-En el navegador de Windows abre la URL que te muestre Vite, habitualmente **http://localhost:5173**. VS Code también puede ofrecer **Open in Browser**. Prueba a añadir `Leche`, `Lechuga` y `Leche entera`; al escribir `lec` aparecen sugerencias del histórico. Haz clic sobre un producto para marcarlo como comprado. Para detener el servidor, pulsa `Ctrl+C` en la terminal WSL.
+En el navegador de Windows abre la URL que te muestre Vite, habitualmente **http://localhost:5173**. Crea una cuenta con el código de invitación; cada usuario elige un nombre y una contraseña de al menos 12 caracteres. Prueba a añadir `Leche`, `Lechuga` y `Leche entera`; al escribir `lec` aparecen sugerencias del histórico. Para detener el servidor, pulsa `Ctrl+C`.
 
 > **Nota:** Cloudflare/Vite mantiene una D1 local para desarrollo; los productos de prueba no se copian a producción.
 
@@ -108,17 +108,23 @@ npm run deploy
 Estos comandos **no** son las variables locales. Configuran los valores privados del Worker desplegado:
 
 ```bash
-npx wrangler secret put APP_PASSWORD
+npx wrangler secret put INVITE_CODE
 npx wrangler secret put SESSION_SECRET
 ```
 
-Introduce una contraseña fuerte y otro secreto aleatorio de al menos 32 caracteres. Si quieres, usa el mismo `APP_PASSWORD` de pruebas, pero no reutilices la contraseña como `SESSION_SECRET`. Puedes generar un secreto diferente con:
+Introduce un código de invitación largo y privado y un secreto de sesión diferente de al menos 32 caracteres. Puedes generar cada valor con:
 
 ```bash
 node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 ```
 
-Abre otra vez la URL pública y autentícate con la contraseña que acabas de configurar. Antes de establecer estos secretos, el login mostrará un error de configuración: es normal.
+Abre la URL pública y crea la primera cuenta con el código de invitación. Comparte el código solo con las personas que deban crear una cuenta; cambia el secreto `INVITE_CODE` si deja de ser privado.
+
+### Actualizar una instalación existente
+
+Haz antes una copia de seguridad de D1. Configura `INVITE_CODE` en `.dev.vars` para local y como secreto de producción; conserva `SESSION_SECRET`. Aplica las migraciones y despliega. **La primera cuenta registrada en cada base recibe la lista y el histórico anteriores**: crea esa cuenta tú antes de compartir la invitación. Las sesiones antiguas dejan de ser válidas. Las tablas originales quedan como copia sin sincronización posterior; no las uses para consultar los datos actuales. `APP_PASSWORD` ya no se utiliza.
+
+El cálculo de contraseñas se ejecuta en el Durable Object `PASSWORD_HASHER`, configurado en Wrangler, para disponer de más CPU por solicitud también en Workers Free.
 
 ## 5. Instalar en Android como app
 
@@ -168,14 +174,15 @@ npm run dev
 - **Wrangler no abre el navegador de login:** copia la URL de autorización que muestra en la terminal WSL en Chrome de Windows.
 - **`Error: database_id`:** revisa que hayas sustituido `REEMPLAZAR_CON_DATABASE_ID` por el UUID de tu D1 real y que el binding sea `DB`.
 - **Errores al instalar paquetes en `/mnt/c`:** mueve el proyecto a `~/projects` dentro de WSL y vuelve a ejecutar `npm install`.
-- **El login falla con error 503:** revisa que `APP_PASSWORD` y `SESSION_SECRET` estén definidos en `.dev.vars` (local) o con `wrangler secret put` (producción) y que el secreto tenga 32 caracteres como mínimo.
+- **El registro falla con error 503:** revisa que `INVITE_CODE` tenga al menos 16 caracteres y que `SESSION_SECRET` tenga al menos 32.
 - **Si `localhost:5173` no funciona desde Windows:** confirma que Vite sigue ejecutándose en WSL, comprueba la URL y el puerto que muestra la terminal y revisa el reenvío de puertos de VS Code/WSL.
 
 ## API principal
 
 | Método | Endpoint | Función |
 | --- | --- | --- |
-| `POST` | `/api/login` | Autenticación con contraseña |
+| `POST` | `/api/register` | Crear cuenta con invitación |
+| `POST` | `/api/login` | Autenticación con usuario y contraseña |
 | `GET` | `/api/session` | Comprobar sesión |
 | `POST` | `/api/logout` | Cerrar sesión |
 | `GET` | `/api/items` | Listar los productos |
@@ -190,7 +197,7 @@ npm run dev
 - La URL `.workers.dev` es pública, pero la API de datos exige una sesión validada. **No hay limitador de intentos de login específico de la app**; usa una contraseña fuerte y, si compartes la dirección públicamente, evalúa Cloudflare Access o mecanismos adicionales de protección.
 - Sesión de hasta 30 días; cerrar sesión borra la cookie de ese dispositivo. No hay invalidación de sesiones individuales en servidor.
 - Los datos requieren Internet; sin conexión no se pueden actualizar ni recuperar desde D1. No hay cola de cambios offline.
-- Es una sola lista compartida bajo una sola contraseña, sin usuarios independientes ni sincronización en tiempo real (otros dispositivos ven cambios al recargar).
+- Cada cuenta dispone de su propia lista e histórico; no hay sincronización en tiempo real entre dispositivos (los cambios se ven al recargar).
 - No hay panel para borrar elementos del histórico; solo se eliminan las filas de la compra.
 
 ## Documentación oficial

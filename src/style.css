@@ -86,6 +86,10 @@ button:focus-visible,input:focus-visible{outline:3px solid #86d1bf;outline-offse
 .login-card h1 span{color:#1cb58b}
 .login-subtitle{font-size:14px;line-height:1.7;color:#7e9185;margin:0 0 27px}
 .login-form label{display:block;font-size:12px;font-weight:800;margin-bottom:9px}
+.login-form .input-with-icon + label{margin-top:15px}
+.auth-switch{width:100%;margin-top:14px;border:0;background:transparent;color:#0b785e;font-weight:700}
+.account-actions{display:flex;align-items:center;gap:12px;font-size:13px;overflow:hidden}
+.account-actions span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:130px}
 .input-with-icon{height:53px;border:1px solid #e0eae3;background:#f9fbf9;display:flex;align-items:center;gap:10px;padding:0 15px;border-radius:12px;color:#9aafa2}
 .input-with-icon input{flex:1;min-width:0;border:0;outline:none;background:transparent;color:#253b2c;font-size:15px}
 .primary-button{height:52px;width:100%;border:0;background:#0b785e;color:white;border-radius:12px;font-weight:800;display:flex;align-items:center;justify-content:space-between;padding:0 18px;margin-top:15px}

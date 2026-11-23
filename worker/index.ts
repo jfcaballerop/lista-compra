@@ -1,9 +1,11 @@
 /** API privada para una lista personal de compra. Se ejecuta en Cloudflare Workers. */
 import { ShoppingService } from "./application/shopping";
 import { D1ShoppingRepository } from "./infrastructure/repositories/d1-shopping-repository";
-import { hasValidSession } from "./infrastructure/security/session";
-import { login, logout, session } from "./routes/auth";
-import { error, handleError } from "./routes/http";
+import { D1UserRepository } from "./infrastructure/repositories/d1-user-repository";
+import { sessionUserId } from "./infrastructure/security/session";
+import { login, logout, register } from "./routes/auth";
+import { error, handleError, json } from "./routes/http";
+export { PasswordHasher } from "./infrastructure/security/password";
 import {
   addItem,
   clearPurchased,
@@ -15,8 +17,9 @@ import {
 
 interface Env {
   DB: D1Database;
-  APP_PASSWORD: string;
+  INVITE_CODE?: string;
   SESSION_SECRET: string;
+  PASSWORD_HASHER: DurableObjectNamespace;
 }
 
 async function route(req: Request, env: Env): Promise<Response> {
@@ -26,12 +29,11 @@ async function route(req: Request, env: Env): Promise<Response> {
 
   if (!path.startsWith("/api/")) return error("Ruta desconocida.", 404);
   if (
-    !env.APP_PASSWORD ||
     !env.SESSION_SECRET ||
     env.SESSION_SECRET.length < 32
   ) {
     return error(
-      "Servidor sin configurar. Define APP_PASSWORD y SESSION_SECRET.",
+      "Servidor sin configurar. Define SESSION_SECRET.",
       503,
     );
   }
@@ -42,15 +44,19 @@ async function route(req: Request, env: Env): Promise<Response> {
   }
 
   if (path === "/api/login" && method === "POST")
-    return login(req, env.APP_PASSWORD, env.SESSION_SECRET);
-  if (path === "/api/session" && method === "GET")
-    return session(req, env.SESSION_SECRET);
+    return login(req, env.DB, env.SESSION_SECRET, env.PASSWORD_HASHER);
+  if (path === "/api/register" && method === "POST")
+    return register(req, env.DB, env.INVITE_CODE, env.SESSION_SECRET, env.PASSWORD_HASHER);
   if (path === "/api/logout" && method === "POST") return logout();
 
-  if (!(await hasValidSession(req, env.SESSION_SECRET)))
+  const userId = await sessionUserId(req, env.SESSION_SECRET);
+  const user = userId ? await new D1UserRepository(env.DB).findById(userId) : null;
+  if (path === "/api/session" && method === "GET")
+    return user ? json({ authenticated: true, username: user.username }) : json({ authenticated: false });
+  if (!user)
     return error("Sesión caducada.", 401);
 
-  const shopping = new ShoppingService(new D1ShoppingRepository(env.DB));
+  const shopping = new ShoppingService(new D1ShoppingRepository(env.DB, user.id));
 
   if (path === "/api/items" && method === "GET") return listItems(shopping);
   if (path === "/api/suggestions" && method === "GET")
