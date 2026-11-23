@@ -63,6 +63,8 @@ button:focus-visible,input:focus-visible{outline:3px solid #86d1bf;outline-offse
 .item--done .item-check{background:#a8c5b6;border-color:#a8c5b6}
 .item--done .item-name{color:#a3afa8;text-decoration:line-through;text-decoration-thickness:1.5px}
 .icon-action{border:0;background:transparent;color:#b4c0b6;margin-right:10px;border-radius:10px;display:grid;place-items:center;padding:10px}
+.product-lookup{color:#16866c;text-decoration:none}
+.product-lookup:hover{background:#edf4f0}
 .icon-action.delete:hover{color:#d66a6a}
 .bought-section{margin-top:30px}
 .bought-section .item-list{background:#fbfdfb}

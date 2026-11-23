@@ -226,6 +226,16 @@ function App() {
         <span className="item-check">{item.purchased ? <Icon name="check" size={17} stroke={3} /> : null}</span>
         <span className="item-name">{item.name}</span>
       </button>
+      <a
+        className="icon-action product-lookup"
+        href={`https://tienda.mercadona.es/search-results?query=${encodeURIComponent(item.name)}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        title={`Consultar ${item.name} en Mercadona`}
+        aria-label={`Consultar el precio de ${item.name} en Mercadona`}
+      >
+        <Icon name="search" size={19} />
+      </a>
       <button type="button" className="icon-action delete" title={`Eliminar ${item.name}`} aria-label={`Eliminar ${item.name}`} onClick={() => remove(item)} disabled={!!busyItem || working}>
         <Icon name="trash" size={19} />
       </button>

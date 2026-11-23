@@ -21,3 +21,12 @@
   - [x] Impedir que un usuario consulte o modifique los datos de otro.
   - [ ] Separar las futuras copias locales y colas de sincronización por usuario al implementar el uso sin conexión.
   - [x] Mantener una misma aplicación y despliegue para todos los usuarios, sin necesitar una instancia independiente por móvil.
+
+## Consulta de precios de Mercadona
+
+- [x] Permitir consultar los productos de la tienda online de Mercadona desde cada producto de la lista.
+  - [x] Abrir en una pestaña nueva la búsqueda oficial de Mercadona con el nombre del producto; por ejemplo, [leche](https://tienda.mercadona.es/search-results?query=leche).
+  - [x] Dejar que el usuario elija en Mercadona la variante deseada y consulte allí su precio.
+  - [x] Mantener la lista de compra sin cambios al consultar y no guardar precios que puedan quedar desactualizados.
+  - [x] Usar la web oficial porque Mercadona no permite automatizar sus rutas `/api` según su `robots.txt`.
+  - [x] Tener en cuenta que Mercadona puede pedir un código postal para mostrar la disponibilidad de la zona.

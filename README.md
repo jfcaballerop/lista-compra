@@ -11,6 +11,7 @@ Aplicación personal de lista de la compra, instalable en Android como PWA. Fron
 - Otro toque lo devuelve a pendientes; puedes eliminar una fila o vaciar Comprados **sin borrar el histórico**.
 - Si vuelves a añadir un producto comprado, se retiran sus filas de Comprados y queda uno pendiente.
 - Bloquea duplicados entre los pendientes; conserva un catálogo personal con el historial.
+- Permite abrir la búsqueda oficial de Mercadona para cada producto, elegir una variante y consultar su precio; Mercadona puede pedir el código postal y la consulta no modifica ni añade productos a la lista.
 - Cada usuario tiene su propia cuenta, lista e histórico en D1; el registro requiere invitación.
 - Se instala desde Chrome en Android y funciona como PWA. Necesita conexión para leer o modificar datos. La interfaz puede cargarse offline después de haberla visitado.
 
