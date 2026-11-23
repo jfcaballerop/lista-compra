@@ -9,6 +9,7 @@ Aplicación personal de lista de la compra, instalable en Android como PWA. Fron
 - Escribes un producto y, **a partir de 3 caracteres**, consulta el histórico y sugiere hasta 8 nombres (prioriza los más utilizados).
 - Un toque sobre un producto pendiente lo **marca como comprado, tacha y desplaza** a la zona Comprados.
 - Otro toque lo devuelve a pendientes; puedes eliminar una fila o vaciar Comprados **sin borrar el histórico**.
+- Si vuelves a añadir un producto comprado, se retiran sus filas de Comprados y queda uno pendiente.
 - Bloquea duplicados entre los pendientes; conserva un catálogo personal con el historial.
 - Una contraseña protege el acceso, con sesión firmada en cookie HttpOnly; los datos están en D1.
 - Se instala desde Chrome en Android y funciona como PWA. Necesita conexión para leer o modificar datos. La interfaz puede cargarse offline después de haberla visitado.
@@ -137,7 +138,12 @@ npm run dev
 
 - El archivo `src/main.tsx` contiene la interfaz React y las llamadas a la API.
 - `src/style.css` define el diseño responsive para móvil.
-- `worker/index.ts` expone la API, la autenticación y los accesos a D1.
+- `worker/index.ts` es la entrada del Worker y distribuye las rutas HTTP.
+- `worker/routes/` contiene los endpoints y las respuestas HTTP.
+- `worker/application/` implementa los casos de uso de la lista.
+- `worker/domain/` define las entidades y reglas de la lista.
+- `worker/infrastructure/repositories/` accede a D1.
+- `worker/infrastructure/security/` gestiona la autenticación y las sesiones.
 - `migrations/` guarda la estructura evolutiva de la base D1.
 - `wrangler.jsonc` configura Cloudflare y el binding `DB`.
 - `.vscode/tasks.json` define tareas desde **Terminal → Run Task**.
@@ -146,6 +152,7 @@ npm run dev
 | --- | --- |
 | `npm run dev` | Servidor local integrado Vite + Worker + D1 local |
 | `npm run build` | Comprobar tipos TypeScript y compilar |
+| `npm test` | Ejecutar las pruebas con una D1 aislada |
 | `npm run db:local` | Aplicar migraciones D1 locales |
 | `npm run db:remote` | Aplicar migraciones en Cloudflare |
 | `npm run deploy` | Publicar una nueva versión (incluye compilación) |
