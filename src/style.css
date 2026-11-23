@@ -6,11 +6,12 @@ button{cursor:pointer}
 button:disabled{cursor:default;opacity:.57}
 button:focus-visible,input:focus-visible{outline:3px solid #86d1bf;outline-offset:3px}
 .app-shell{min-height:100vh;background:linear-gradient(#f4faf6 0,#f7faf8 365px,#f7faf8 100%)}
-.header{height:78px;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 max(26px,calc((100vw - 780px)/2));border-bottom:1px solid #e8efeb}
-.brand{display:flex;align-items:center;gap:11px;font-family:Manrope,system-ui,sans-serif;font-weight:800;font-size:21px;letter-spacing:-.8px;color:#133a31}
+.header{height:78px;background:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 max(26px,calc((100vw - 780px)/2));border-bottom:1px solid #e8efeb}
+.brand{display:flex;flex:none;align-items:center;gap:11px;white-space:nowrap;font-family:Manrope,system-ui,sans-serif;font-weight:800;font-size:21px;letter-spacing:-.8px;color:#133a31}
 .brand-icon{background:#0c7960;color:#fff;width:38px;height:38px;border-radius:11px;display:grid;place-items:center}
 .brand-dot{color:#1cb58b}
-.logout-button{width:40px;height:40px;border:1px solid #e7eee9;border-radius:11px;background:#fff;color:#6b7a74;display:grid;place-items:center}
+.brand-flag{flex:none;border-radius:2px}
+.logout-button{flex:none;width:40px;height:40px;border:1px solid #e7eee9;border-radius:11px;background:#fff;color:#6b7a74;display:grid;place-items:center}
 .logout-button:hover,.icon-action:hover{background:#edf4f0}
 .content{max-width:780px;margin:0 auto;padding:43px 24px 70px}
 .eyebrow{display:flex;align-items:center;gap:7px;color:#15866c;font-size:11px;font-weight:800;letter-spacing:1.55px}

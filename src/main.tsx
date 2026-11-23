@@ -260,7 +260,14 @@ function App() {
 
   return <div className="app-shell">
     <header className="header">
-      <div className="brand"><div className="brand-icon"><Icon name="bag" size={23}/></div><span>Mi Lista<span className="brand-dot">.</span></span></div>
+      <div className="brand">
+        <div className="brand-icon"><Icon name="bag" size={23}/></div>
+        <span>Mi Lista<span className="brand-dot">.</span></span>
+        <svg className="brand-flag" role="img" aria-label="Bandera de España" width="24" height="16" viewBox="0 0 24 16">
+          <path fill="#aa151b" d="M0 0h24v16H0z" />
+          <path fill="#f1bf00" d="M0 4h24v8H0z" />
+        </svg>
+      </div>
       <div className="account-actions"><span>{currentUser}</span><button type="button" className="logout-button" onClick={logout} disabled={working || !!busyItem || initialLoading} title="Cerrar sesión" aria-label="Cerrar sesión"><Icon name="logout" size={20}/></button></div>
     </header>
 
