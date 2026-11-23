@@ -13,6 +13,7 @@
     "db:remote": "wrangler d1 migrations apply lista-compra --remote"
   },
   "dependencies": {
+    "@noble/hashes": "^2.4.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },

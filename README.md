@@ -124,7 +124,7 @@ Abre la URL pública y crea la primera cuenta con el código de invitación. Com
 
 Haz antes una copia de seguridad de D1. Configura `INVITE_CODE` en `.dev.vars` para local y como secreto de producción; conserva `SESSION_SECRET`. Aplica las migraciones y despliega. **La primera cuenta registrada en cada base recibe la lista y el histórico anteriores**: crea esa cuenta tú antes de compartir la invitación. Las sesiones antiguas dejan de ser válidas. Las tablas originales quedan como copia sin sincronización posterior; no las uses para consultar los datos actuales. `APP_PASSWORD` ya no se utiliza.
 
-El cálculo de contraseñas se ejecuta en el Durable Object `PASSWORD_HASHER`, configurado en Wrangler, para disponer de más CPU por solicitud también en Workers Free.
+El cálculo de contraseñas se ejecuta en el Durable Object `PASSWORD_HASHER`, configurado en Wrangler, para disponer de más CPU por solicitud también en Workers Free. Usa PBKDF2-SHA-256 con 600.000 iteraciones mediante una implementación JavaScript auditada, ya que Web Crypto de Cloudflare limita cada operación a 100.000 iteraciones. Es compatible con las contraseñas ya registradas.
 
 ## 5. Instalar en Android como app
 

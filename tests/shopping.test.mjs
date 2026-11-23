@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { pbkdf2Sync } from "node:crypto";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -242,6 +243,41 @@ test("el registro exige invitación y el acceso exige contraseña individual", a
   assert.equal((await request("/api/items", { sessionCookie: "compra_session=v1.4102444800.fake" })).status, 401);
   const forged = login.cookie.replace(userId, "00000000-0000-4000-8000-000000000001");
   assert.equal((await request("/api/items", { sessionCookie: forged })).status, 401);
+});
+
+test("el registro y el acceso funcionan con el límite de PBKDF2 de Cloudflare", async () => {
+  const subtle = crypto.subtle;
+  const originalDeriveBits = subtle.deriveBits;
+  subtle.deriveBits = function (algorithm, ...args) {
+    if (typeof algorithm === "object" && algorithm.name === "PBKDF2" && algorithm.iterations > 100_000)
+      throw new DOMException("Límite de iteraciones superado", "NotSupportedError");
+    return originalDeriveBits.call(this, algorithm, ...args);
+  };
+  try {
+    const registration = await request("/api/register", {
+      method: "POST", sessionCookie: "", body: { username: "limite", password, invitation },
+    });
+    assert.equal(registration.status, 200);
+    const login = await request("/api/login", {
+      method: "POST", sessionCookie: "", body: { username: "limite", password },
+    });
+    assert.equal(login.status, 200);
+  } finally {
+    subtle.deriveBits = originalDeriveBits;
+  }
+});
+
+test("las cuentas existentes con PBKDF2 de 600.000 iteraciones siguen pudiendo acceder", async () => {
+  const salt = "00112233445566778899aabbccddeeff";
+  const legacyPassword = "contraseña-ya-registrada";
+  const hash = pbkdf2Sync(legacyPassword, Buffer.from(salt, "hex"), 600_000, 32, "sha256").toString("hex");
+  await env.DB.prepare(
+    "INSERT INTO users (id, username, username_key, password_salt, password_hash) VALUES (?, ?, ?, ?, ?)",
+  ).bind(crypto.randomUUID(), "legacy", "legacy", salt, hash).run();
+  const login = await request("/api/login", {
+    method: "POST", sessionCookie: "", body: { username: "legacy", password: legacyPassword },
+  });
+  assert.equal(login.status, 200);
 });
 
 test("el traslado inicial y el registro se revierten juntos si ocurre un error", async () => {

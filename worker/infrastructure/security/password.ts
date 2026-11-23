@@ -1,3 +1,6 @@
+import { pbkdf2 } from "@noble/hashes/pbkdf2.js";
+import { sha256 } from "@noble/hashes/sha2.js";
+
 const encoder = new TextEncoder();
 const ITERATIONS = 600_000;
 
@@ -6,16 +9,10 @@ function hex(bytes: Uint8Array): string {
 }
 
 export async function derivePassword(password: string, salt: string): Promise<string> {
-  const key = await crypto.subtle.importKey(
-    "raw", encoder.encode(password), "PBKDF2", false, ["deriveBits"],
-  );
   const bytes = Uint8Array.from(salt.match(/.{2}/g) ?? [], (part) => parseInt(part, 16));
-  const hash = await crypto.subtle.deriveBits(
-    { name: "PBKDF2", hash: "SHA-256", salt: bytes.buffer, iterations: ITERATIONS },
-    key,
-    256,
-  );
-  return hex(new Uint8Array(hash));
+  // Cloudflare limita Web Crypto a 100.000 iteraciones por operación.
+  const hash = pbkdf2(sha256, encoder.encode(password), bytes, { c: ITERATIONS, dkLen: 32 });
+  return hex(hash);
 }
 
 export function newSalt(): string {
