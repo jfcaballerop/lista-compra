@@ -324,7 +324,11 @@ function App() {
       <section className="compose-card" aria-label="Añadir producto">
         <form className="compose-form" onSubmit={e => { e.preventDefault(); void addProduct(query); }}>
           <div className="entry-wrapper">
-            <Icon name="search" size={21}/>
+            <button type="button" className="entry-lookup" disabled={!query.trim() || working}
+              onClick={() => setLookupProduct(query.trim())} title="Consultar antes de añadir"
+              aria-label="Consultar el precio del producto escrito en un supermercado" aria-haspopup="dialog">
+              <Icon name="search" size={21}/>
+            </button>
             <input ref={inputRef} id="product-input" type="text" autoComplete="off" placeholder="Añadir producto (ej. leche)…" maxLength={80} value={query}
               onChange={e => setQuery(e.target.value)} onFocus={() => { if (suggestions.length && query.trim().length >= 3) setSuggestionsOpen(true); }}
               onKeyDown={e => { if (e.key === 'Escape') setSuggestionsOpen(false); }} />

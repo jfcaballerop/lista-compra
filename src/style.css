@@ -25,6 +25,8 @@ button:focus-visible,input:focus-visible{outline:3px solid #86d1bf;outline-offse
 .entry-wrapper input{border:0;background:transparent;outline:none;min-width:0;width:100%;height:52px;font-size:15px;color:#263c32}
 .entry-wrapper input::placeholder{color:#9ba8a1}
 .clear-entry{border:0;background:transparent;color:#9ca9a2;display:grid;place-items:center;padding:6px}
+.entry-lookup{flex:none;border:0;background:transparent;color:#16866c;width:44px;height:44px;border-radius:10px;display:grid;place-items:center;margin-left:-8px}
+.entry-lookup:not(:disabled):hover{background:#edf4f0}
 .add-button{display:flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;background:#08785e;color:#fff;font-weight:700;min-width:122px;padding:0 17px;transition:background .15s,transform .15s}
 .add-button:not(:disabled):hover,.primary-button:not(:disabled):hover{background:#075f4b}
 .add-button:not(:disabled):active,.item-main:active{transform:scale(.99)}
