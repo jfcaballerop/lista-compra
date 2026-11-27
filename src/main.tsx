@@ -46,6 +46,34 @@ async function api<T>(url: string, opts: RequestInit = {}): Promise<T> {
   return result as T;
 }
 
+function SupermarketSearch({ product, onClose }: { product: string; onClose: () => void }) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    if (dialogRef.current && !dialogRef.current.open) dialogRef.current.showModal();
+  }, []);
+
+  function close() {
+    dialogRef.current?.close();
+    onClose();
+  }
+
+  const query = encodeURIComponent(product);
+  return <dialog ref={dialogRef} className="supermarket-dialog" aria-labelledby="supermarket-title" aria-describedby="supermarket-description"
+    onCancel={event => { event.preventDefault(); close(); }}
+    onKeyDown={event => { if (event.key === 'Escape') { event.preventDefault(); close(); } }}>
+    <div className="supermarket-heading">
+      <h2 id="supermarket-title">Elige supermercado</h2>
+      <button type="button" className="icon-action" onClick={close} aria-label="Cerrar selector de supermercado"><Icon name="x" size={20} /></button>
+    </div>
+    <p id="supermarket-description">Buscar «{product}» en una nueva pestaña.</p>
+    <div className="supermarket-options">
+      <a href={`https://tienda.mercadona.es/search-results?query=${query}`} target="_blank" rel="noopener noreferrer">Mercadona <Icon name="search" size={20} /></a>
+      <a href={`https://supermercado.froiz.com/?q=${query}`} target="_blank" rel="noopener noreferrer">Froiz <Icon name="search" size={20} /></a>
+    </div>
+  </dialog>;
+}
+
 function App() {
   const [auth, setAuth] = useState<AuthState>('loading');
   const [username, setUsername] = useState('');
@@ -57,6 +85,7 @@ function App() {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const [items, setItems] = useState<Item[]>([]);
+  const [lookupProduct, setLookupProduct] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
   const [busyItem, setBusyItem] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -69,6 +98,7 @@ function App() {
       searchRequest.current++;
       setAuth('logged-out');
       setItems([]);
+      setLookupProduct(null);
       setCurrentUser('');
       setQuery('');
       setSuggestions([]);
@@ -150,6 +180,7 @@ function App() {
       setAuth('logged-out');
       setCurrentUser('');
       setItems([]);
+      setLookupProduct(null);
       setQuery('');
       setSuggestions([]);
       setSuggestionsOpen(false);
@@ -226,16 +257,16 @@ function App() {
         <span className="item-check">{item.purchased ? <Icon name="check" size={17} stroke={3} /> : null}</span>
         <span className="item-name">{item.name}</span>
       </button>
-      <a
+      <button
+        type="button"
         className="icon-action product-lookup"
-        href={`https://tienda.mercadona.es/search-results?query=${encodeURIComponent(item.name)}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        title={`Consultar ${item.name} en Mercadona`}
-        aria-label={`Consultar el precio de ${item.name} en Mercadona`}
+        onClick={() => setLookupProduct(item.name)}
+        title={`Consultar ${item.name} en un supermercado`}
+        aria-label={`Consultar el precio de ${item.name} en un supermercado`}
+        aria-haspopup="dialog"
       >
         <Icon name="search" size={19} />
-      </a>
+      </button>
       <button type="button" className="icon-action delete" title={`Eliminar ${item.name}`} aria-label={`Eliminar ${item.name}`} onClick={() => remove(item)} disabled={!!busyItem || working}>
         <Icon name="trash" size={19} />
       </button>
@@ -327,6 +358,7 @@ function App() {
       </section>
       <div className="bottom-note"><Icon name="wifi" size={16}/> Necesitas conexión para sincronizar los cambios.</div>
     </main>
+    {lookupProduct !== null && <SupermarketSearch product={lookupProduct} onClose={() => setLookupProduct(null)} />}
   </div>;
 }
 
