@@ -70,6 +70,8 @@ function SupermarketSearch({ product, onClose }: { product: string; onClose: () 
     <div className="supermarket-options">
       <a href={`https://tienda.mercadona.es/search-results?query=${query}`} target="_blank" rel="noopener noreferrer">Mercadona <Icon name="search" size={20} /></a>
       <a href={`https://supermercado.froiz.com/?q=${query}`} target="_blank" rel="noopener noreferrer">Froiz <Icon name="search" size={20} /></a>
+      <a href={`https://www.lidl.es/q/search?q=${query}`} target="_blank" rel="noopener noreferrer">Lidl <Icon name="search" size={20} /></a>
+      <a href={`https://www.aldi.es/busqueda.html?query=${query}`} target="_blank" rel="noopener noreferrer">Aldi <Icon name="search" size={20} /></a>
     </div>
   </dialog>;
 }

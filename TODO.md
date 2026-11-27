@@ -34,6 +34,6 @@
 ## Selector de supermercado
 
 - [x] Mostrar un selector al pulsar la lupa de cualquier producto, pendiente o comprado.
-  - [x] Permitir elegir Mercadona o Froiz antes de abrir la búsqueda en una nueva pestaña.
-  - [x] Buscar por el nombre del producto en Mercadona (`https://tienda.mercadona.es/search-results?query=...`) o Froiz (`https://supermercado.froiz.com/?q=...`).
+  - [x] Permitir elegir Mercadona, Froiz, Lidl o Aldi antes de abrir la búsqueda en una nueva pestaña.
+  - [x] Buscar por el nombre del producto en Mercadona (`https://tienda.mercadona.es/search-results?query=...`), Froiz (`https://supermercado.froiz.com/?q=...`), Lidl (`https://www.lidl.es/q/search?q=...`) o Aldi (`https://www.aldi.es/busqueda.html?query=...`).
   - [x] Permitir cancelar el selector sin abrir una tienda ni modificar la lista.
